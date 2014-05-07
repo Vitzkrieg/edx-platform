@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from xmodule.modulestore.locations import SlashSeparatedCourseKey, Location
-from types import NoneType
 
 from south.modelsinspector import add_introspection_rules
 add_introspection_rules([], ["^xmodule_django\.models\.CourseKeyField"])
@@ -35,7 +34,7 @@ class NoneToEmptyQuerySet(models.query.QuerySet):
     """
     def _filter_or_exclude(self, *args, **kwargs):
         for name in self.model._meta.get_all_field_names():
-            field_object, model, direct, m2m = self.model._meta.get_field_by_name(name)
+            field_object, _model, direct, _m2m = self.model._meta.get_field_by_name(name)
             if direct and hasattr(field_object, 'Empty'):
                 for suffix in ('', '_exact'):
                     key = '{}{}'.format(name, suffix)
@@ -80,6 +79,7 @@ class CourseKeyField(models.CharField):
 
     def validate(self, value, model_instance):
         """Validate Empty values, otherwise defer to the parent"""
+        # raise validation error if the use of this field says it can't be blank but it is
         if not self.blank and value is self.Empty:
             raise ValidationError(self.error_messages['blank'])
         else:
@@ -129,6 +129,7 @@ class LocationKeyField(models.CharField):
 
     def validate(self, value, model_instance):
         """Validate Empty values, otherwise defer to the parent"""
+        # raise validation error if the use of this field says it can't be blank but it is
         if not self.blank and value is self.Empty:
             raise ValidationError(self.error_messages['blank'])
         else:
